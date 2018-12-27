@@ -1,0 +1,55 @@
+{
+  "project_info": {
+    "project_number": "701045419236",
+    "firebase_url": "https://autotracker-server.firebaseio.com",
+    "project_id": "autotracker-server",
+    "storage_bucket": "autotracker-server.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:701045419236:android:01d0b411247be705",
+        "android_client_info": {
+          "package_name": "com.armyof2.autotracker"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "701045419236-7sfg5sc9mabmkhu2tt4ek9bah0ggnpai.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.armyof2.autotracker",
+            "certificate_hash": "55c2fb0ea90e37d24764769f0d942b956fd03fe3"
+          }
+        },
+        {
+          "client_id": "701045419236-tfb4jnkes02rihcl8t1tt5kam5p1je4t.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB64acEjaGpeznIX8IbXWNQWOXpBvILyFI"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 2,
+          "other_platform_oauth_client": [
+            {
+              "client_id": "701045419236-tfb4jnkes02rihcl8t1tt5kam5p1je4t.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

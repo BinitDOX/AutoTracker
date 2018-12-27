@@ -1,18 +1,122 @@
 <?xml version="1.0" encoding="utf-8"?>
-<android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
-    android:layout_width="match_parent"
+<RelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android" android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="com.armyof2.autotracker.MainActivity">
+    android:focusable="true"
+    android:focusableInTouchMode="true">
 
     <TextView
+        android:id="@+id/tv_title"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Hello World!"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        android:layout_alignParentTop="true"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="25dp"
+        android:text="Track Target:"
+        android:textColor="@android:color/white"
+        android:textSize="35sp" />
 
-</android.support.constraint.ConstraintLayout>
+    <TextView
+        android:id="@+id/tv_title2"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignStart="@+id/text_input_layout2"
+        android:layout_below="@+id/tv_title"
+        android:layout_marginLeft="10dp"
+        android:layout_marginTop="15dp"
+        android:text="Your Tracking ID: "
+        android:textColor="@android:color/white"
+        android:textSize="15sp" />
+
+    <android.support.design.widget.TextInputLayout
+        android:id="@+id/text_input_layout2"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/tv_title"
+        android:layout_centerHorizontal="true"
+        android:layout_marginLeft="20dp"
+        android:layout_marginRight="20dp"
+        android:layout_marginTop="65dp"
+        android:textColorHint="@color/colorHint">
+
+        <EditText
+            android:id="@+id/et_trackid"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/tv_title"
+            android:layout_centerHorizontal="true"
+            android:ems="10"
+            android:hint="Target's Tracking ID"
+            android:inputType="textPersonName"
+            android:textColorHint="@color/colorHint" />
+
+    </android.support.design.widget.TextInputLayout>
+
+    <android.support.design.widget.TextInputLayout
+        android:id="@+id/text_input_layout3"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/tv_title"
+        android:layout_centerHorizontal="true"
+        android:layout_marginLeft="20dp"
+        android:layout_marginRight="20dp"
+        android:layout_marginTop="145dp"
+        android:textColorHint="@color/colorHint">
+
+        <EditText
+            android:id="@+id/et_phoneno"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/tv_title"
+            android:layout_centerHorizontal="true"
+            android:ems="10"
+            android:hint="Target's Phone No."
+            android:inputType="phone"
+            android:textColorHint="@color/colorHint" />
+
+    </android.support.design.widget.TextInputLayout>
+
+    <Button
+        android:id="@+id/butt_track"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentStart="true"
+        android:layout_below="@+id/text_input_layout2"
+        android:layout_marginLeft="30dp"
+        android:layout_marginRight="30dp"
+        android:layout_marginTop="130dp"
+        android:background="@drawable/roundbutton"
+        android:onClick="onTrackButtonClicked"
+        android:text="START TRACKING"
+        android:textSize="20sp" />
+
+    <Switch
+        android:id="@+id/switch1"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignEnd="@+id/butt_track"
+        android:layout_alignStart="@+id/butt_track"
+        android:layout_below="@+id/butt_track"
+        android:layout_marginLeft="5dp"
+        android:layout_marginRight="5dp"
+        android:layout_marginTop="74dp"
+        android:text="Enable this device to be tracked:  "
+        android:textColor="@color/common_google_signin_btn_text_dark_default"
+        android:textSize="20sp" />
+
+    <Button
+        android:id="@+id/butt_ctc"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignEnd="@+id/switch1"
+        android:layout_alignTop="@+id/tv_title2"
+        android:layout_marginRight="0dp"
+        android:layout_marginTop="25dp"
+        android:background="@drawable/roundbutton"
+        android:minHeight="20dp"
+        android:minWidth="50dp"
+        android:onClick="copyToClipboard"
+        android:text="Copy"
+        android:textSize="10sp" />
+
+</RelativeLayout>
