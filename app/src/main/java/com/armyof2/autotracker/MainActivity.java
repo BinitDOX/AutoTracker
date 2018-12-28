@@ -9,6 +9,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
+import android.location.Location;
 import android.location.LocationManager;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
@@ -33,6 +34,10 @@ import android.widget.Toast;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GoogleApiAvailability;
+import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
 import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -61,6 +66,9 @@ public class MainActivity extends AppCompatActivity {
     private boolean mLocationPermissionGranted = false;
     private ArrayList<String> TIDs;
     private ProgressDialog progress;
+    private FusedLocationProviderClient mFusedLocationClient;
+    public static String targetUid;
+
 
 
     @Override
@@ -78,6 +86,8 @@ public class MainActivity extends AppCompatActivity {
         database = FirebaseDatabase.getInstance();
         myRef = database.getReference();
         intent = new Intent(this, MapActivity.class);
+        mFusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
+
 
         progress = new ProgressDialog(this);
         progress.setMessage("Connecting to Server...");
@@ -133,6 +143,28 @@ public class MainActivity extends AppCompatActivity {
             }
 
         });
+
+    }
+
+    private void getLastKnownLocation() {
+        Log.d(TAG, "getLastKnownLocation: called.");
+        if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            return;
+        }
+        mFusedLocationClient.getLastLocation().addOnCompleteListener(new OnCompleteListener<Location>() {
+            @Override
+            public void onComplete(@NonNull Task<Location> task) {
+                if (task.isSuccessful() && task.getResult()!=null) {
+                    Location location = task.getResult();
+                    //GeoPoint geoPoint = new GeoPoint(location.getLatitude(), location.getLongitude());
+                    Log.d(TAG, "onComplete: latitude: " + location.getLatitude());
+                    Log.d(TAG, "onComplete: longitude: " + location.getLongitude());
+                    myRef.child(userUid).child("Track Latitude").setValue(location.getLatitude());
+                    myRef.child(userUid).child("Track Longitude").setValue(location.getLongitude());
+                }
+            }
+        });
+
     }
 
     public void onTrackButtonClicked(View view) {
@@ -195,6 +227,8 @@ public class MainActivity extends AppCompatActivity {
                 SmsManager smsManager = SmsManager.getDefault();
                 smsManager.sendTextMessage(phoneNo.getText().toString(), null, msg, null, null);
                 progress.hide();
+                targetUid = trackId.getText().toString();
+                goodToast();
         } catch (Exception ex) {
                 ex.printStackTrace();
         }
@@ -209,7 +243,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void goodToast() {
-        mToast.setText("Server joined!");
+        mToast.setText("Tracking Success!");
         progress.hide();
         mToast.show();
     }
@@ -275,16 +309,11 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void getLocationPermission() {
-        /*
-         * Request location permission, so that we can get the location of the
-         * device. The result of the permission request is handled by a callback,
-         * onRequestPermissionsResult.
-         */
         if (ContextCompat.checkSelfPermission(this.getApplicationContext(),
                 android.Manifest.permission.ACCESS_FINE_LOCATION)
                 == PackageManager.PERMISSION_GRANTED) {
             mLocationPermissionGranted = true;
-            //getChatrooms();
+            getLastKnownLocation();
         } else {
             ActivityCompat.requestPermissions(this,
                     new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION},
@@ -336,7 +365,7 @@ public class MainActivity extends AppCompatActivity {
         switch (requestCode) {
             case PERMISSIONS_REQUEST_ENABLE_GPS: {
                 if(mLocationPermissionGranted){
-                    //getChatrooms();
+                    getLastKnownLocation();
                 }
                 else{
                     getLocationPermission();
@@ -351,7 +380,7 @@ public class MainActivity extends AppCompatActivity {
         super.onResume();
         if(checkMapServices()){
             if(mLocationPermissionGranted){
-                //getChatrooms();
+                getLastKnownLocation();
                 Log.d(TAG, "onResume: gotit");
             }
             else{
