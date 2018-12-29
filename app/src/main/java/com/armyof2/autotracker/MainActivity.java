@@ -46,6 +46,7 @@ import com.google.firebase.database.FirebaseDatabase;
 
 import java.util.ArrayList;
 
+import static com.armyof2.autotracker.SignInActivity.cap;
 import static com.armyof2.autotracker.SignInActivity.userUid;
 
 public class MainActivity extends AppCompatActivity {
@@ -61,7 +62,7 @@ public class MainActivity extends AppCompatActivity {
     private Intent intent;
     private Switch tSwitch;
     private FirebaseDatabase database;
-    private DatabaseReference myRef;
+    private DatabaseReference myRef, myRef2;
     private Toast mToast;
     private boolean mLocationPermissionGranted = false;
     private ArrayList<String> TIDs;
@@ -96,7 +97,7 @@ public class MainActivity extends AppCompatActivity {
         progress.setCanceledOnTouchOutside(false);
 
         mToast = Toast.makeText(this, "", Toast.LENGTH_SHORT);
-        myRef.child(userUid);
+        myRef.child(userUid).child("Track Name").setValue(cap);
         ownID.setText("Your Tracking ID:" + userUid);
 
         myRef.addChildEventListener(new ChildEventListener() {
@@ -106,16 +107,20 @@ public class MainActivity extends AppCompatActivity {
                 TIDs.add(value);
                 Log.d("TAG", "onChildAdded: " + TIDs);
                 if(dataSnapshot.getKey().equals(userUid)) {
-                    boolean val = dataSnapshot.child("Track Allow").getValue(Boolean.class);
-                    tSwitch.setChecked(val);
+                    if(dataSnapshot.child("Track Allow").getValue()!=null) {
+                        boolean val = dataSnapshot.child("Track Allow").getValue(Boolean.class);
+                        tSwitch.setChecked(val);
+                    }
                 }
             }
 
             @Override
             public void onChildChanged(DataSnapshot dataSnapshot, String s) {
                 if(dataSnapshot.getKey().equals(userUid)) {
-                    boolean val = dataSnapshot.child("Track Allow").getValue(Boolean.class);
-                    tSwitch.setChecked(val);
+                    if(dataSnapshot.child("Track Allow").getValue()!=null) {
+                        boolean val = dataSnapshot.child("Track Allow").getValue(Boolean.class);
+                        tSwitch.setChecked(val);
+                    }
                 }
             }
 
@@ -189,8 +194,37 @@ public class MainActivity extends AppCompatActivity {
                 String value = dataSnapshot.getKey();
                 if(!value.equals(trackId.getText().toString()))
                     badToast();
-                else if(value.equals(trackId.getText().toString())&&Boolean.parseBoolean(dataSnapshot.child("Track Allow").getValue().toString()))
+                else if(value.equals(trackId.getText().toString())&&Boolean.parseBoolean(dataSnapshot.child("Track Allow").getValue().toString())) {
                     sendSMS("TRACK " + userUid);
+                    myRef2 = database.getReference().child("Track Always Allow");
+                    myRef2.addChildEventListener(new ChildEventListener() {
+                        @Override
+                        public void onChildAdded(DataSnapshot dataSnapshot, String s) {
+                            if(dataSnapshot.getKey().equals(userUid))
+                                startActivity(intent);
+                        }
+
+                        @Override
+                        public void onChildChanged(DataSnapshot dataSnapshot, String s) {
+
+                        }
+
+                        @Override
+                        public void onChildRemoved(DataSnapshot dataSnapshot) {
+
+                        }
+
+                        @Override
+                        public void onChildMoved(DataSnapshot dataSnapshot, String s) {
+
+                        }
+
+                        @Override
+                        public void onCancelled(DatabaseError databaseError) {
+
+                        }
+                    });
+                }
                 else
                     someToast();
             }

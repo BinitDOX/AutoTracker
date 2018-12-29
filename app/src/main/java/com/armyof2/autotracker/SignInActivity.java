@@ -41,6 +41,7 @@ import com.google.firebase.auth.GoogleAuthProvider;
 public class SignInActivity extends AppCompatActivity implements View.OnClickListener{
 
     private static final int RC_SIGN_IN = 7001;
+    public static String cap;
     GoogleSignInOptions gso;
     GoogleSignInClient mGoogleSignInClient;
     private FirebaseAuth mAuth;
@@ -193,7 +194,7 @@ public class SignInActivity extends AppCompatActivity implements View.OnClickLis
             if (acc != null) {
                 name0 = acc.getDisplayName();
                 String[] strArray = name0.split(" ");
-                String cap = strArray[0].substring(0, 1).toUpperCase() + strArray[0].substring(1);
+                cap = strArray[0].substring(0, 1).toUpperCase() + strArray[0].substring(1);
                 Typeface Roboto_Thin_Light_Italic = Typeface.createFromAsset(getAssets(),  "fonts/Roboto-ThinItalic.ttf");
                 welcomeView.setTypeface(Roboto_Thin_Light_Italic);
                 welcomeView.setText("Welcome, " + cap);
