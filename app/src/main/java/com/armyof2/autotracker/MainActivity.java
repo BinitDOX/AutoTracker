@@ -1,5 +1,7 @@
 package com.armyof2.autotracker;
 
+import android.*;
+import android.Manifest;
 import android.app.Dialog;
 import android.app.ProgressDialog;
 import android.content.ClipData;
@@ -9,6 +11,8 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
+import android.graphics.Color;
+import android.graphics.drawable.ColorDrawable;
 import android.location.Location;
 import android.location.LocationManager;
 import android.net.ConnectivityManager;
@@ -45,13 +49,16 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import static com.armyof2.autotracker.SignInActivity.cap;
 import static com.armyof2.autotracker.SignInActivity.userUid;
+import static com.armyof2.autotracker.SmsListener.highFlag;
 
 public class MainActivity extends AppCompatActivity {
 
     public static String TRACK_ID;
+    public static final int REQUEST_ID_MULTIPLE_PERMISSIONS = 9004;
     public static final int ERROR_DIALOG_REQUEST = 9001;
     public static final int PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION = 9002;
     public static final int PERMISSIONS_REQUEST_ENABLE_GPS = 9003;
@@ -69,7 +76,10 @@ public class MainActivity extends AppCompatActivity {
     private ProgressDialog progress;
     private FusedLocationProviderClient mFusedLocationClient;
     public static String targetUid;
-
+    private CustomDialogBox cdd;
+    private boolean await = true;
+    private boolean xo = true;
+    //private boolean flag = true;
 
 
     @Override
@@ -88,7 +98,9 @@ public class MainActivity extends AppCompatActivity {
         myRef = database.getReference();
         intent = new Intent(this, MapActivity.class);
         mFusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
+        cdd = new CustomDialogBox(MainActivity.this);
 
+        requestPermission();
 
         progress = new ProgressDialog(this);
         progress.setMessage("Connecting to Server...");
@@ -100,6 +112,13 @@ public class MainActivity extends AppCompatActivity {
         myRef.child(userUid).child("Track Name").setValue(cap);
         ownID.setText("Your Tracking ID:" + userUid);
 
+        Thread thread = new Thread(runnable);
+        thread.start();
+
+        if(checkAndRequestPermissions()) {
+            Toast.makeText(this, "Got All Permissions", Toast.LENGTH_SHORT).show();
+        }
+
         myRef.addChildEventListener(new ChildEventListener() {
             @Override
             public void onChildAdded(DataSnapshot dataSnapshot, String s) {
@@ -107,7 +126,9 @@ public class MainActivity extends AppCompatActivity {
                 TIDs.add(value);
                 Log.d("TAG", "onChildAdded: " + TIDs);
                 if(dataSnapshot.getKey().equals(userUid)) {
-                    if(dataSnapshot.child("Track Allow").getValue()!=null) {
+                    if(dataSnapshot.child("Track Allow").getValue()==null)
+                        myRef.child(userUid).child("Track Allow").setValue(false);
+                    else{
                         boolean val = dataSnapshot.child("Track Allow").getValue(Boolean.class);
                         tSwitch.setChecked(val);
                     }
@@ -192,16 +213,21 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onChildAdded(DataSnapshot dataSnapshot, String s) {
                 String value = dataSnapshot.getKey();
-                if(!value.equals(trackId.getText().toString()))
-                    badToast();
+                if(!value.equals(trackId.getText().toString()));
+                    //badToast();
                 else if(value.equals(trackId.getText().toString())&&Boolean.parseBoolean(dataSnapshot.child("Track Allow").getValue().toString())) {
                     sendSMS("TRACK " + userUid);
-                    myRef2 = database.getReference().child("Track Always Allow");
+                    myRef2 = database.getReference().child(trackId.getText().toString()).child("Track Always Allow");
                     myRef2.addChildEventListener(new ChildEventListener() {
                         @Override
                         public void onChildAdded(DataSnapshot dataSnapshot, String s) {
-                            if(dataSnapshot.getKey().equals(userUid))
-                                startActivity(intent);
+                            if(dataSnapshot.getKey().equals(userUid)){
+                                if(dataSnapshot.getValue(Boolean.class)==true) {
+                                    startActivity(intent);
+                                    goodToast();
+                                    await=false;
+                                }
+                            }
                         }
 
                         @Override
@@ -227,11 +253,22 @@ public class MainActivity extends AppCompatActivity {
                 }
                 else
                     someToast();
+                if(await){
+                    progress.setMessage("Awaiting target's response...");
+                    myRef.child(trackId.getText().toString()).child("Track User Response").setValue("Awaiting");
+                }
             }
 
             @Override
             public void onChildChanged(DataSnapshot dataSnapshot, String s) {
-
+                String value = dataSnapshot.getKey();
+                if(value.equals(trackId.getText().toString()))
+                    if(dataSnapshot.child("Track User Response").getValue().equals("Allowed")) {
+                        startActivity(intent);
+                        goodToast();
+                    }else if(dataSnapshot.child("Track User Response").getValue().equals("Denied"))
+                        dedToast();
+                    progress.hide();
             }
 
             @Override
@@ -260,9 +297,7 @@ public class MainActivity extends AppCompatActivity {
         try {
                 SmsManager smsManager = SmsManager.getDefault();
                 smsManager.sendTextMessage(phoneNo.getText().toString(), null, msg, null, null);
-                progress.hide();
                 targetUid = trackId.getText().toString();
-                goodToast();
         } catch (Exception ex) {
                 ex.printStackTrace();
         }
@@ -273,7 +308,6 @@ public class MainActivity extends AppCompatActivity {
         ClipData clip = ClipData.newPlainText("label", userUid);
         clipboard.setPrimaryClip(clip);
         Toast.makeText(getApplicationContext(), "Tracking ID Copied",Toast.LENGTH_SHORT).show();
-        startActivity(intent);
     }
 
     public void goodToast() {
@@ -290,6 +324,12 @@ public class MainActivity extends AppCompatActivity {
 
     public void badToast() {
         mToast.setText("Target device could not be found!");
+        progress.hide();
+        mToast.show();
+    }
+
+    public void dedToast() {
+        mToast.setText("Target denied tracking request!");
         progress.hide();
         mToast.show();
     }
@@ -390,6 +430,13 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         }
+        if (requestCode == REQ_CODE) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                Log.d(TAG, "onRequestPermissionsResult: Permission has been granted");
+            } else {
+                Log.d(TAG, "onRequestPermissionsResult: Permission denied !!!");
+            }
+        }
     }
 
     @Override
@@ -408,6 +455,43 @@ public class MainActivity extends AppCompatActivity {
         }
 
     }
+
+    private  boolean checkAndRequestPermissions() {
+        Log.d(TAG, "checkAndRequestPermissions: start");
+        int permissionReceiveMessage = ContextCompat.checkSelfPermission(this.getApplicationContext(),
+                android.Manifest.permission.RECEIVE_SMS);
+        int internetpermission = ContextCompat.checkSelfPermission(this.getApplicationContext(), android.Manifest.permission.INTERNET);
+        int Wifi1= ContextCompat.checkSelfPermission(this.getApplicationContext(), android.Manifest.permission.ACCESS_WIFI_STATE);
+        int wifi2 = ContextCompat.checkSelfPermission(this.getApplicationContext(), android.Manifest.permission.CHANGE_WIFI_STATE);
+        int wifi3 = ContextCompat.checkSelfPermission(this.getApplicationContext(), android.Manifest.permission.UPDATE_DEVICE_STATS);
+        List<String> listPermissionsNeeded = new ArrayList<>();
+
+        if (internetpermission != PackageManager.PERMISSION_GRANTED) {
+            listPermissionsNeeded.add(android.Manifest.permission.INTERNET);
+            Log.d(TAG, "checkAndRequestPermissions: 1");
+        }
+        if (permissionReceiveMessage != PackageManager.PERMISSION_GRANTED) {
+            listPermissionsNeeded.add(android.Manifest.permission.SEND_SMS);
+            Log.d(TAG, "checkAndRequestPermissions: 2");
+        }
+        if (Wifi1 != PackageManager.PERMISSION_GRANTED) {
+            listPermissionsNeeded.add(android.Manifest.permission.ACCESS_WIFI_STATE);
+            Log.d(TAG, "checkAndRequestPermissions: 3");
+        }
+        if (wifi2 != PackageManager.PERMISSION_GRANTED) {
+            listPermissionsNeeded.add(android.Manifest.permission.CHANGE_WIFI_STATE);
+        }
+        if (wifi3 != PackageManager.PERMISSION_GRANTED) {
+            listPermissionsNeeded.add(android.Manifest.permission.UPDATE_DEVICE_STATS);
+        }
+        if (!listPermissionsNeeded.isEmpty()) {
+            ActivityCompat.requestPermissions(this, listPermissionsNeeded.toArray(new String[listPermissionsNeeded.size()]),REQUEST_ID_MULTIPLE_PERMISSIONS);
+            Log.d(TAG, "checkAndRequestPermissions: false");
+            return false;
+        }
+        return true;
+    }
+
 
     @Override
     protected void onResume() {
@@ -457,4 +541,43 @@ public class MainActivity extends AppCompatActivity {
             this.getResources().updateConfiguration(configuration, metrics);
         }
     }
+
+    final int REQ_CODE = 100;
+    void requestPermission(){
+        if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.RECEIVE_SMS) != PackageManager.PERMISSION_GRANTED) {
+            Log.d(TAG, "requestPermission: Permission is not granted, requesting");
+            ActivityCompat.requestPermissions(this, new String[]{android.Manifest.permission.SEND_SMS,android.Manifest.permission.READ_SMS,android.Manifest.permission.RECEIVE_SMS,android.Manifest.permission.INTERNET,android.Manifest.permission.ACCESS_WIFI_STATE,android.Manifest.permission.CHANGE_WIFI_STATE, Manifest.permission.UPDATE_DEVICE_STATS}, REQ_CODE);
+
+        } else {
+            Log.d(TAG, "requestPermission: Permission has been granted");
+
+        }
+    }
+
+    Runnable runnable = new Runnable() {
+        public void run() {
+            while (xo) {
+
+                try {
+                    Thread.sleep(3000);
+                    runOnUiThread(new Runnable() {
+
+                        @Override
+                        public void run() {
+                            getLastKnownLocation();
+                            Log.d(TAG, "run: lastloc");
+                            if(highFlag) {
+                                cdd.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+                                cdd.show();
+                                highFlag=false;
+                                xo=false;
+                            }
+                        }
+                    });
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+    };
 }

@@ -2,13 +2,16 @@ package com.armyof2.autotracker;
 
 
 import android.app.ProgressDialog;
+import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.graphics.Typeface;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.annotation.NonNull;
 import android.support.design.widget.Snackbar;
+import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.util.DisplayMetrics;
 import android.util.Log;
@@ -54,7 +57,14 @@ public class SignInActivity extends AppCompatActivity implements View.OnClickLis
     private Animation out;
     private ProgressDialog progress;
     private Boolean exit = false;
-
+    int PERMISSION_ALL = 1;
+    String[] PERMISSIONS = {
+            android.Manifest.permission.RECEIVE_SMS,
+            android.Manifest.permission.INTERNET,
+            android.Manifest.permission.ACCESS_WIFI_STATE,
+            android.Manifest.permission.CHANGE_WIFI_STATE,
+            android.Manifest.permission.UPDATE_DEVICE_STATS
+    };
 
 
     @Override
@@ -72,7 +82,7 @@ public class SignInActivity extends AppCompatActivity implements View.OnClickLis
 
         //progress
         progress = new ProgressDialog(this);
-        progress.setMessage("Signing into Poll4Bunk...");
+        progress.setMessage("Signing into AutoTracker...");
         progress.setProgressStyle(ProgressDialog.STYLE_SPINNER);
         progress.setIndeterminate(true);
 
@@ -95,6 +105,11 @@ public class SignInActivity extends AppCompatActivity implements View.OnClickLis
         Typeface Roboto_Thin = Typeface.createFromAsset(getAssets(),  "fonts/Roboto-Thin.ttf");
         signInButton.setTypeface(Roboto_Thin,Typeface.BOLD);
         mAuth = FirebaseAuth.getInstance();
+
+       /* if(!hasPermissions(this, PERMISSIONS)){
+            ActivityCompat.requestPermissions(this, PERMISSIONS, PERMISSION_ALL);
+            Log.d("TAG", "ask");
+        }*/
 
     }
 
@@ -284,6 +299,19 @@ public class SignInActivity extends AppCompatActivity implements View.OnClickLis
         }
     }
 */
+
+
+    public static boolean hasPermissions(Context context, String... permissions) {
+        if (context != null && permissions != null) {
+            for (String permission : permissions) {
+                if (ActivityCompat.checkSelfPermission(context, permission) != PackageManager.PERMISSION_GRANTED) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
     @Override
     public void onBackPressed() {
         if (exit) {

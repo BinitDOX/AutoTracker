@@ -66,7 +66,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         myRef.addChildEventListener(new ChildEventListener() {
             @Override
             public void onChildAdded(DataSnapshot dataSnapshot, String s) {
-                if(dataSnapshot.getKey().equals(userUid)) {
+                if(dataSnapshot.getKey().equals(targetUid)) {
                     lati = (double) dataSnapshot.child("Track Latitude").getValue();
                     longi = (double) dataSnapshot.child("Track Longitude").getValue();
                     Log.d("TAG", "onCA: " + lati);
@@ -76,7 +76,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
 
             @Override
             public void onChildChanged(DataSnapshot dataSnapshot, String s) {
-                if(dataSnapshot.getKey().equals(userUid)) {
+                if(dataSnapshot.getKey().equals(targetUid)) {
                     lati = (double) dataSnapshot.child("Track Latitude").getValue();
                     longi = (double) dataSnapshot.child("Track Longitude").getValue();
                     Log.d("TAG", "onCC: " + lati);
@@ -186,7 +186,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
 
     Runnable runnable = new Runnable() {
         public void run() {
-            while (thr) {
+            while (true) {
 
                 try {
                     Thread.sleep(2000);
